@@ -45,6 +45,8 @@ import {
 import TravelPlan from './TravelPlan';
 import { TravelPlanShimmer, MapSearchShimmer } from './ShimmerUI';
 import axios from 'axios';
+import DestinationCarousel from "./destinationcarousel";
+
 
 export default function Dashboard() {
   const [selectedBeach, setSelectedBeach] = useState(null);
@@ -59,19 +61,34 @@ export default function Dashboard() {
   const [searchData, setSearchData] = useState('');
   const [isLoadingTravelPlan, setIsLoadingTravelPlan] = useState(false);
   const [isLoadingMapData, setIsLoadingMapData] = useState(false);
-  
-  // User profile data - using mock user for now
-  const user = 'amanc5922@gmail.com';
-  const userProfile = {
-    name: user?.split('@')[0] || 'User',
-    email: user || 'user@example.com',
-    phone: '+91 9876543210',
-    location: 'Mumbai, India',
-    joinDate: 'January 2024',
-    totalTrips: 12,
-    favoriteDestinations: 8,
-    profileImage: 'https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=200'
-  };
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  // Helper to build a normalized profile object from raw backend/localStorage user data
+  const buildProfile = (user) => ({
+    name: user?.name || "User",
+    email: user?.email || "No Email",
+    phone: user?.phone || "",
+    location: user?.location || "",
+    profilePicture:
+      user?.profilePicture ||
+      "https://ui-avatars.com/api/?name=" +
+        encodeURIComponent(user?.name || "User") +
+        "&background=2563eb&color=fff"
+  });
+
+  // Real profile state, initialized from localStorage. Updated in place after a
+  // successful save — no page reload required.
+  const [profile, setProfile] = useState(() => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    return buildProfile(storedUser);
+  });
+
+  const [editForm, setEditForm] = useState({
+    name: profile.name,
+    phone: profile.phone,
+    location: profile.location,
+    profilePicture: profile.profilePicture
+  });
 
   // Navigation items
   const navigationItems = [
@@ -153,7 +170,7 @@ export default function Dashboard() {
     setIsLoadingTravelPlan(true);
     
     try{
-      const response = await axios.post("http://localhost:8080/api/generate",
+      const response = await axios.post("http://localhost:3001/api/generate",
         {
            source: formData.start,
            destination: formData.end,
@@ -341,7 +358,7 @@ export default function Dashboard() {
     if(searchData){
       setIsLoadingMapData(true);
       try{
-        const response = await axios.get(`http://localhost:8080/search/analyzeData/${searchData}`, 
+        const response = await axios.get(`http://localhost:3001/search/analyzeData/${searchData}`, 
         {
             headers:{
                 Authorization: authHeader,
@@ -518,6 +535,112 @@ export default function Dashboard() {
     </div>
   );
 
+  const updateProfileHandler = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await axios.put(
+        "http://localhost:3001/api/auth/profile",
+        {
+          name: editForm.name,
+          phone: editForm.phone,
+          location: editForm.location,
+          profilePicture: editForm.profilePicture
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      const updatedUser = response.data.user;
+
+      // Persist to localStorage so the profile survives a real page refresh
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+
+      // Update UI instantly without a page reload
+      setProfile(buildProfile(updatedUser));
+
+      setShowEditModal(false);
+      toast.success("Profile Updated Successfully");
+    } catch (error) {
+      toast.error("Failed to update profile");
+    }
+  };
+
+  // Edit Profile modal — rendered at the top level of the component's return
+  // so it actually appears regardless of which tab is active.
+  const editProfileModal = showEditModal && (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-6 w-[500px] max-w-full shadow-2xl">
+        <h2 className="text-2xl font-bold mb-6 text-gray-900">Edit Profile</h2>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input
+              type="text"
+              placeholder="Name"
+              value={editForm.name}
+              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+            <input
+              type="text"
+              placeholder="Phone Number"
+              value={editForm.phone}
+              onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <input
+              type="text"
+              placeholder="Location"
+              value={editForm.location}
+              onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Profile Picture URL</label>
+            <input
+              type="text"
+              placeholder="https://..."
+              value={editForm.profilePicture}
+              onChange={(e) => setEditForm({ ...editForm, profilePicture: e.target.value })}
+              className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={() => setShowEditModal(false)}
+            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={updateProfileHandler}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg"
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderProfileTab = () => (
     <div className="space-y-6">
       {/* Profile Header */}
@@ -525,7 +648,7 @@ export default function Dashboard() {
         <div className="flex items-center space-x-6">
           <div className="relative">
             <img
-              src={userProfile.profileImage}
+              src={profile.profilePicture}
               alt="Profile"
               className="w-24 h-24 rounded-full object-cover"
             />
@@ -535,42 +658,25 @@ export default function Dashboard() {
           </div>
           
           <div className="flex-1">
-            <h2 className="text-2xl font-bold text-gray-900">{userProfile.name}</h2>
-            <p className="text-gray-600">{userProfile.email}</p>
-            <p className="text-gray-500 text-sm">Member since {userProfile.joinDate}</p>
+            <h2 className="text-2xl font-bold text-gray-900">{profile.name}</h2>
+            <p className="text-gray-600">{profile.email}</p>
           </div>
           
-          <button className="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
+          <button
+            onClick={() => {
+              setEditForm({
+                name: profile.name,
+                phone: profile.phone,
+                location: profile.location,
+                profilePicture: profile.profilePicture
+              });
+              setShowEditModal(true);
+            }}
+            className="group flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105"
+          >
             <Edit className="h-4 w-4 group-hover:scale-110 transition-transform duration-200" />
             <span>Edit Profile</span>
           </button>
-        </div>
-      </div>
-
-      {/* Profile Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl shadow-lg p-6 text-center border border-gray-100">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Plane className="h-6 w-6 text-blue-600" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900">{userProfile.totalTrips}</h3>
-          <p className="text-gray-600">Total Trips</p>
-        </div>
-        
-        <div className="bg-white rounded-2xl shadow-lg p-6 text-center border border-gray-100">
-          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Heart className="h-6 w-6 text-red-600" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900">{userProfile.favoriteDestinations}</h3>
-          <p className="text-gray-600">Favorite Destinations</p>
-        </div>
-        
-        <div className="bg-white rounded-2xl shadow-lg p-6 text-center border border-gray-100">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Star className="h-6 w-6 text-green-600" />
-          </div>
-          <h3 className="text-2xl font-bold text-gray-900">4.8</h3>
-          <p className="text-gray-600">Average Rating</p>
         </div>
       </div>
 
@@ -583,7 +689,7 @@ export default function Dashboard() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
             <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <User className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-900">{userProfile.name}</span>
+              <span className="text-gray-900">{profile.name}</span>
             </div>
           </div>
           
@@ -591,7 +697,7 @@ export default function Dashboard() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
             <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <Mail className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-900">{userProfile.email}</span>
+              <span className="text-gray-900">{profile.email}</span>
             </div>
           </div>
           
@@ -599,7 +705,7 @@ export default function Dashboard() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
             <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <Phone className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-900">{userProfile.phone}</span>
+              <span className="text-gray-900">{profile.phone || "Not added"}</span>
             </div>
           </div>
           
@@ -607,7 +713,7 @@ export default function Dashboard() {
             <label className="block text-sm font-medium text-gray-700 mb-2">Location</label>
             <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
               <MapPin className="h-5 w-5 text-gray-400" />
-              <span className="text-gray-900">{userProfile.location}</span>
+              <span className="text-gray-900">{profile.location || "Not added"}</span>
             </div>
           </div>
         </div>
@@ -649,7 +755,7 @@ export default function Dashboard() {
       </div>
     </div>
   );
-  
+
   const renderContent = () => {
     switch (activeTab) {
       case 'search':
@@ -658,10 +764,44 @@ export default function Dashboard() {
         return renderDashboardTab();
       case 'destinations':
         return (
-          <div className="text-center py-20">
-            <Compass className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Destinations</h3>
-            <p className="text-gray-600">Explore amazing destinations around the world</p>
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">
+                Popular Destinations
+              </h2>
+
+              <p className="text-gray-600 mt-2">
+                Discover amazing destinations around the world
+              </p>
+            </div>
+
+            <DestinationCarousel
+              destinations={[
+                {
+                  name: "Goa",
+                  image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
+                  description: "Sunny beaches and vibrant nightlife.",
+                  price: "$120",
+                  rating: 4.5,
+                },
+                {
+                  name: "Manali",
+                  image: "https://images.unsplash.com/photo-1600585154526-990dced4db0d",
+                  description: "Snowy peaks and cool breeze.",
+                  price: "$90",
+                  rating: 4.7,
+                },
+                {
+                  name: "Kerala",
+                  image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944",
+                  description: "Backwaters and greenery.",
+                  price: "$110",
+                  rating: 4.8,
+                },
+              ]}
+              currentDestination={0}
+              setCurrentDestination={() => {}}
+            />
           </div>
         );
       case 'bookings':
@@ -689,13 +829,15 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      {editProfileModal}
+
       {/* Welcome Header */}
       <div className="bg-white/90 backdrop-blur-sm border-b border-white/20 p-6">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                Welcome back, {userProfile.name}! 👋
+                Welcome back, {profile.name}! 👋
               </h1>
               <p className="text-gray-600">
                 Monitor beach safety conditions and plan your coastal adventures

@@ -1,20 +1,19 @@
-import React, { useState,useEffect } from 'react';
-import Header from './components/header';
-import Footer from './components/footer';
-import Hero from './components/hero';
-import SearchForm from './components/searchform';
-import TravelPlans from './components/TravelPlans';
-import DestinationCarousel from './components/destinationcarousel';
-import AccommodationCards from './components/accomodationcards';
-import WeatherInsights from './components/weatherinsights';
-import BeachSafetyDashboard from './components/BeachSafetyDashboard';
-import BeachSafetyMap from './components/BeachSafetyMap';
-import BeachAlerts from './components/BeachAlerts';
-import BeachSafetyAnalyzer from './components/BeachSafetyAnalyzer';
-
-import AuthPage from './components/AuthPage';
-import Dashboard from './components/Dashboard';
-
+import React, { useState, useEffect } from "react";
+import Header from "./components/header";
+import Footer from "./components/footer";
+import Hero from "./components/hero";
+import SearchForm from "./components/searchform";
+import TravelPlans from "./components/TravelPlans";
+import DestinationCarousel from "./components/destinationcarousel";
+import AccommodationCards from "./components/accomodationcards";
+import WeatherInsights from "./components/weatherinsights";
+import BeachSafetyDashboard from "./components/BeachSafetyDashboard";
+import BeachSafetyMap from "./components/BeachSafetyMap";
+import BeachAlerts from "./components/BeachAlerts";
+import BeachSafetyAnalyzer from "./components/BeachSafetyAnalyzer";
+import TripGenie from "./components/chatbot/TripGenie";
+import AuthPage from "./components/AuthPage";
+import Dashboard from "./components/Dashboard";
 
 // Dummy destination data
 const demoDestinations = [
@@ -89,45 +88,26 @@ const demoStays = [
   },
 ];
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 function App() {
   const [destinations, setDestinations] = useState(demoDestinations);
   const [currentDestination, setCurrentDestination] = useState(0);
-  const [currentView, setCurrentView] = useState('travel');
+  const [currentView, setCurrentView] = useState("travel");
   const [showBeachAnalyzer, setShowBeachAnalyzer] = useState(false);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [checkIn, setCheckIn] = useState('');
-  const [checkOut, setCheckOut] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [checkIn, setCheckIn] = useState("");
+  const [checkOut, setCheckOut] = useState("");
   const [guests, setGuests] = useState(1);
   const [selectedDestination, setSelectedDestination] = useState(null);
 
-
-
   const [user, setUser] = useState(() => {
-  const savedUser = localStorage.getItem("user");
+    const savedUser = localStorage.getItem("user");
 
-  return savedUser
-    ? JSON.parse(savedUser).email
-    : null;
-});
+    return savedUser ? JSON.parse(savedUser).email : null;
+  });
 
-const [authView, setAuthView] = useState(() => {
-  const savedUser = localStorage.getItem("user");
-  return savedUser ? "dashboard" : "home";
-});
+  
+const [authView, setAuthView] = useState("home");
 
 useEffect(() => {
   const savedUser = localStorage.getItem("user");
@@ -136,44 +116,37 @@ useEffect(() => {
     const userData = JSON.parse(savedUser);
 
     setUser(userData.email);
-    setAuthView("dashboard");
+    setAuthView("home");
   }
 }, []);
 
 const handleLogin = (email) => {
   setUser(email);
-  setAuthView("dashboard");
-};
-
-const handleLogout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-
-  setUser(null);
   setAuthView("home");
 };
 
-const showAuth = () => {
-  setAuthView("auth");
-};
 
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
+    setUser(null);
+    setAuthView("home");
+  };
+
+  const showAuth = () => {
+    setAuthView("auth");
+  };
 
   // 🔐 Auth Page View
-  if (authView === 'auth') {
-    return <AuthPage onLogin={handleLogin} onCancel={() => setAuthView('home')} />; // ✅ Auth cancel handled
+  if (authView === "auth") {
+    return (
+      <AuthPage onLogin={handleLogin} onCancel={() => setAuthView("home")} />
+    ); // ✅ Auth cancel handled
   }
 
-  // ✅ Dashboard View
-  if (authView === 'dashboard' && user) {
-    return (
-      <div className="min-h-screen">
-        <Header user={user} onLogout={handleLogout} />
-        <Dashboard user={user} />
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -191,11 +164,30 @@ const showAuth = () => {
           className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-3 rounded-full shadow-lg hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105"
           title="Beach Safety Analyzer"
         >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          <svg
+            className="h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+            />
           </svg>
         </button>
       </div>
+
+
+
+
+
+
+
+
+      
 
       {/* Travel/Beach Dashboard Switcher */}
       {/* <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
@@ -221,10 +213,20 @@ const showAuth = () => {
         </div>
       </div> */}
 
+
+
+
+
       {/* Conditional View */}
-      {currentView === 'travel' ? (
-        <>
-          <Hero />
+      {currentView === "travel" ? (
+      
+    <>
+  {user && (
+    <Dashboard user={user} />
+  )}
+
+  <Hero />
+  
           {/* <SearchForm
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -262,6 +264,10 @@ const showAuth = () => {
         </>
       )}
 
+ <TripGenie
+  user={user}
+  onShowAuth={showAuth}
+/>
       <Footer />
     </div>
   );

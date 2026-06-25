@@ -28,7 +28,7 @@ const handleSubmit = async (e) => {
   if (isSignIn) {
     try {
       const response = await axios.post(
-        "http://localhost:8080/api/auth/login",
+        "http://localhost:3001/api/auth/login",
         {
           email: formData.email,
           password: formData.password,
@@ -65,7 +65,7 @@ const handleSubmit = async (e) => {
 
   try {
     const response = await axios.post(
-      "http://localhost:8080/api/auth/register",
+      "http://localhost:3001/api/auth/register",
       {
         name: formData.name,
         email: formData.email,

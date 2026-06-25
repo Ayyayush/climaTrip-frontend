@@ -47,7 +47,7 @@ const BeachSafetyAnalyzer = ({ isOpen, onToggle, onClose }) => {
 
     // Simulate API call
      try {
-    const response = await axios.get(`http://localhost:8080/search/analyzeData/${selectedBeach}`);
+    const response = await axios.get(`http://localhost:3001/search/analyzeData/${selectedBeach}`);
     setAnalysisData(response.data);
     console.log(response.data);
   } catch (error) {

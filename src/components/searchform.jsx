@@ -40,7 +40,7 @@ const SearchForm = () => {
     const token = localStorage.getItem("token");
 
     const response = await axios.post(
-      "http://localhost:8080/api/generate",
+      "http://localhost:3001/api/generate",
       {
         source: formData.start,
         destination: formData.end,

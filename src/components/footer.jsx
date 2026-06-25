@@ -45,7 +45,7 @@ function Footer() {
 
         {/* Bottom Line */}
         <div className="border-t border-gray-700 pt-4 text-center text-sm text-gray-500">
-          © 2025 ClimaTrip. Built by MCA BOYZ 🚀
+          © 2025 ClimaTrip. Built by Ayush 🚀
         </div>
       </div>
     </footer>
