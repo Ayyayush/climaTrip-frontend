@@ -46,6 +46,7 @@ import TravelPlan from './TravelPlan';
 import { TravelPlanShimmer, MapSearchShimmer } from './ShimmerUI';
 import axios from 'axios';
 import DestinationCarousel from "./destinationcarousel";
+import { API_URL } from "../config/api";
 
 
 export default function Dashboard() {
@@ -163,14 +164,12 @@ export default function Dashboard() {
   const generatePlanHandler = async (e) => {
     e.preventDefault();
     console.log(formData);
-    const username = 'aman@gmail.com'; // Replace with real values
-    const password = '1234';
-    const authHeader = 'Basic ' + btoa(username + ':' + password);
+    const token = localStorage.getItem("token");
     
     setIsLoadingTravelPlan(true);
     
     try{
-      const response = await axios.post("http://localhost:3001/api/generate",
+      const response = await axios.post(`${API_URL}/api/generate`,
         {
            source: formData.start,
            destination: formData.end,
@@ -179,7 +178,7 @@ export default function Dashboard() {
           },
       {
           headers:{
-              Authorization: authHeader,
+              Authorization: `Bearer ${token}`,
              'Content-Type': 'application/json'
 
           }
@@ -352,16 +351,14 @@ export default function Dashboard() {
   
   
   const apiDataForMap = async () => {
-    const username = 'aman@gmail.com'; 
-    const password = '1234';
-    const authHeader = 'Basic ' + btoa(username + ':' + password);
+    const token = localStorage.getItem("token");
     if(searchData){
       setIsLoadingMapData(true);
       try{
-        const response = await axios.get(`http://localhost:3001/search/analyzeData/${searchData}`, 
+        const response = await axios.get(`${API_URL}/search/analyzeData/${searchData}`, 
         {
             headers:{
-                Authorization: authHeader,
+                Authorization: `Bearer ${token}`,
                'Content-Type': 'application/json'
             }
         }
@@ -540,7 +537,7 @@ export default function Dashboard() {
       const token = localStorage.getItem("token");
 
       const response = await axios.put(
-        "http://localhost:3001/api/auth/profile",
+        `${API_URL}/api/auth/profile`,
         {
           name: editForm.name,
           phone: editForm.phone,

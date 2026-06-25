@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sun, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { API_URL } from "../config/api";
 
 const AuthPage = ({ onLogin, onCancel }) => {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -28,7 +29,7 @@ const handleSubmit = async (e) => {
   if (isSignIn) {
     try {
       const response = await axios.post(
-        "http://localhost:3001/api/auth/login",
+        `${API_URL}/api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
@@ -65,7 +66,7 @@ const handleSubmit = async (e) => {
 
   try {
     const response = await axios.post(
-      "http://localhost:3001/api/auth/register",
+        `${API_URL}/api/auth/register`,
       {
         name: formData.name,
         email: formData.email,
