@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Sun, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
-import axios from 'axios';
-import toast from 'react-hot-toast';
+import React, { useState } from "react";
+import { Sun, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
+import axios from "axios";
+import toast from "react-hot-toast";
 import { API_URL } from "../config/api";
 
 const AuthPage = ({ onLogin, onCancel }) => {
@@ -9,84 +9,100 @@ const AuthPage = ({ onLogin, onCancel }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    name: ''
+    email: "",
+    password: "",
+    confirmPassword: "",
+    name: "",
   });
 
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+    if (isSignIn) {
+      try {
+        const response = await axios.post(
+          `${API_URL}/api/auth/login`,
+          {
+            email: formData.email.trim().toLowerCase(),
+            password: formData.password,
+          },
+          {
+            timeout: 30000,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
 
-  if (isSignIn) {
-    try {
-      const response = await axios.post(
-        `${API_URL}/api/auth/login`,
-        {
-          email: formData.email,
-          password: formData.password,
+        const { token, user } = response.data;
+
+        if (!token || !user) {
+          throw new Error("Invalid response from server");
         }
-      );
 
-      localStorage.setItem(
-        "token",
-        response.data.token
-      );
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
 
-      localStorage.setItem(
-        "user",
-        JSON.stringify(response.data.user)
-      );
+        toast.success("Login Successful");
 
-      toast.success("Login Successful");
+        onLogin(user.email);
+      } catch (error) {
+        console.error("========== LOGIN ERROR ==========");
+        console.error(error);
 
-      onLogin(response.data.user.email);
+        if (!error.response) {
+          toast.error("Unable to connect to server");
+          return;
+        }
 
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message || "Login Failed"
-      );
+        switch (error.response.status) {
+          case 400:
+            toast.error(error.response.data?.message || "Invalid Credentials");
+            break;
+
+          case 401:
+            toast.error("Unauthorized");
+            break;
+
+          case 500:
+            toast.error("Server Error");
+            break;
+
+          default:
+            toast.error(error.response.data?.message || "Login Failed");
+        }
+      }
+
+      return;
     }
 
-    return;
-  }
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
 
-  if (formData.password !== formData.confirmPassword) {
-    toast.error("Passwords do not match!");
-    return;
-  }
-
-  try {
-    const response = await axios.post(
-        `${API_URL}/api/auth/register`,
-      {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/register`, {
         name: formData.name,
         email: formData.email,
         password: formData.password,
+      });
+
+      if (response.data.success) {
+        toast.success("Registration Successful");
+        setIsSignIn(true);
       }
-    );
-
-    if (response.data.success) {
-      toast.success("Registration Successful");
-      setIsSignIn(true);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Registration Failed");
     }
-
-  } catch (error) {
-    toast.error(
-      error?.response?.data?.message || "Registration Failed"
-    );
-  }
-};
-
-
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center p-4">
@@ -97,7 +113,7 @@ const handleSubmit = async (e) => {
             <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
               <Sun className="h-7 w-7 text-white" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">CoastalQuest</h1>
+            <h1 className="text-3xl font-bold text-gray-900">ClimaTrip☀️</h1>
           </div>
           <p className="text-gray-600">Smart Beach Travel & Safety</p>
         </div>
@@ -109,7 +125,9 @@ const handleSubmit = async (e) => {
             <button
               onClick={() => setIsSignIn(true)}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                isSignIn ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                isSignIn
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
               Sign In
@@ -117,7 +135,9 @@ const handleSubmit = async (e) => {
             <button
               onClick={() => setIsSignIn(false)}
               className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                !isSignIn ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                !isSignIn
+                  ? "bg-white text-blue-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
               }`}
             >
               Sign Up
@@ -127,7 +147,9 @@ const handleSubmit = async (e) => {
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isSignIn && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
                 <div className="relative">
                   <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
@@ -145,7 +167,9 @@ const handleSubmit = async (e) => {
 
             {/* Email Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
@@ -162,11 +186,13 @@ const handleSubmit = async (e) => {
 
             {/* Password Field */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleInputChange}
@@ -179,7 +205,11 @@ const handleSubmit = async (e) => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
                 </button>
               </div>
             </div>
@@ -187,11 +217,13 @@ const handleSubmit = async (e) => {
             {/* Confirm Password (Sign Up Only) */}
             {!isSignIn && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <input
-                    type={showConfirmPassword ? 'text' : 'password'}
+                    type={showConfirmPassword ? "text" : "password"}
                     name="confirmPassword"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
@@ -204,7 +236,11 @@ const handleSubmit = async (e) => {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
                   >
-                    {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -212,7 +248,10 @@ const handleSubmit = async (e) => {
 
             {isSignIn && (
               <div className="text-right">
-                <button type="button" className="text-sm text-blue-600 hover:text-blue-700 transition-colors">
+                <button
+                  type="button"
+                  className="text-sm text-blue-600 hover:text-blue-700 transition-colors"
+                >
                   Forgot Password?
                 </button>
               </div>
@@ -222,18 +261,20 @@ const handleSubmit = async (e) => {
               type="submit"
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 shadow-lg"
             >
-              {isSignIn ? 'Sign In' : 'Create Account'}
+              {isSignIn ? "Sign In" : "Create Account"}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              {isSignIn ? "Don't have an account? " : "Already have an account? "}
+              {isSignIn
+                ? "Don't have an account? "
+                : "Already have an account? "}
               <button
                 onClick={() => setIsSignIn(!isSignIn)}
                 className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
               >
-                {isSignIn ? 'Sign Up' : 'Sign In'}
+                {isSignIn ? "Sign Up" : "Sign In"}
               </button>
             </p>
           </div>
@@ -251,9 +292,14 @@ const handleSubmit = async (e) => {
         </div>
 
         <div className="mt-6 text-center text-xs text-gray-500">
-          By {isSignIn ? 'signing in' : 'creating an account'}, you agree to our{' '}
-          <a href="#" className="text-blue-600 hover:text-blue-700">Terms of Service</a> and{' '}
-          <a href="#" className="text-blue-600 hover:text-blue-700">Privacy Policy</a>
+          By {isSignIn ? "signing in" : "creating an account"}, you agree to our{" "}
+          <a href="#" className="text-blue-600 hover:text-blue-700">
+            Terms of Service
+          </a>{" "}
+          and{" "}
+          <a href="#" className="text-blue-600 hover:text-blue-700">
+            Privacy Policy
+          </a>
         </div>
       </div>
     </div>
