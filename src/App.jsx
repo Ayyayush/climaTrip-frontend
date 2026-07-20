@@ -1,19 +1,23 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, lazy, Suspense } from "react";
 import Header from "./components/header";
 import Footer from "./components/footer";
 import Hero from "./components/hero";
-import SearchForm from "./components/searchform";
 import TravelPlans from "./components/TravelPlans";
 import DestinationCarousel from "./components/destinationcarousel";
 import AccommodationCards from "./components/accomodationcards";
 import WeatherInsights from "./components/weatherinsights";
-import BeachSafetyDashboard from "./components/BeachSafetyDashboard";
-import BeachSafetyMap from "./components/BeachSafetyMap";
 import BeachAlerts from "./components/BeachAlerts";
-import BeachSafetyAnalyzer from "./components/BeachSafetyAnalyzer";
-import TripGenie from "./components/chatbot/TripGenie";
-import AuthPage from "./components/AuthPage";
-import Dashboard from "./components/Dashboard";
+import PageLoader from "./components/PageLoader";
+
+// Code-split: each of these is only needed for one specific view
+// (auth screen, logged-in dashboard, or the beach-safety tab), so they
+// don't need to be in the initial bundle for every visitor.
+const AuthPage = lazy(() => import("./components/AuthPage"));
+const Dashboard = lazy(() => import("./components/Dashboard"));
+const BeachSafetyAnalyzer = lazy(() => import("./components/BeachSafetyAnalyzer"));
+const BeachSafetyDashboard = lazy(() => import("./components/BeachSafetyDashboard"));
+const BeachSafetyMap = lazy(() => import("./components/BeachSafetyMap"));
+const TripGenie = lazy(() => import("./components/chatbot/TripGenie"));
 
 // Dummy destination data
 const demoDestinations = [
@@ -142,7 +146,9 @@ const handleLogin = (email) => {
   // 🔐 Auth Page View
   if (authView === "auth") {
     return (
-      <AuthPage onLogin={handleLogin} onCancel={() => setAuthView("home")} />
+      <Suspense fallback={<PageLoader />}>
+        <AuthPage onLogin={handleLogin} onCancel={() => setAuthView("home")} />
+      </Suspense>
     ); // ✅ Auth cancel handled
   }
 
@@ -152,11 +158,13 @@ const handleLogin = (email) => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <Header user={user} onLogout={handleLogout} onShowAuth={showAuth} />
 
-      <BeachSafetyAnalyzer
-        isOpen={showBeachAnalyzer}
-        onToggle={() => setShowBeachAnalyzer(!showBeachAnalyzer)}
-        onClose={() => setShowBeachAnalyzer(false)}
-      />
+      <Suspense fallback={null}>
+        <BeachSafetyAnalyzer
+          isOpen={showBeachAnalyzer}
+          onToggle={() => setShowBeachAnalyzer(!showBeachAnalyzer)}
+          onClose={() => setShowBeachAnalyzer(false)}
+        />
+      </Suspense>
 
       <div className="fixed top-20 right-4 z-40">
         <button
@@ -222,7 +230,9 @@ const handleLogin = (email) => {
       
     <>
   {user && (
-    <Dashboard user={user} />
+    <Suspense fallback={<PageLoader />}>
+      <Dashboard user={user} />
+    </Suspense>
   )}
 
   <Hero />
@@ -253,7 +263,7 @@ const handleLogin = (email) => {
           <WeatherInsights />
         </>
       ) : (
-        <>
+        <Suspense fallback={<PageLoader />}>
           <BeachSafetyDashboard />
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -261,13 +271,15 @@ const handleLogin = (email) => {
               <BeachAlerts />
             </div>
           </div>
-        </>
+        </Suspense>
       )}
 
- <TripGenie
-  user={user}
-  onShowAuth={showAuth}
-/>
+ <Suspense fallback={null}>
+   <TripGenie
+    user={user}
+    onShowAuth={showAuth}
+   />
+ </Suspense>
       <Footer />
     </div>
   );

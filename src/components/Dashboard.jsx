@@ -45,6 +45,7 @@ import {
 import TravelPlan from './TravelPlan';
 import { TravelPlanShimmer, MapSearchShimmer } from './ShimmerUI';
 import axios from 'axios';
+import apiClient from '../lib/apiClient';
 import DestinationCarousel from "./destinationcarousel";
 import { API_URL } from "../config/api";
 
@@ -163,32 +164,21 @@ export default function Dashboard() {
  
   const generatePlanHandler = async (e) => {
     e.preventDefault();
-    console.log(formData);
-    const token = localStorage.getItem("token");
-    
+
     setIsLoadingTravelPlan(true);
-    
+
     try{
-      const response = await axios.post(`${API_URL}/api/generate`,
+      const response = await apiClient.post(`/api/generate`,
         {
            source: formData.start,
            destination: formData.end,
            startDate: formData.startDate,
            endDate: formData.endDate
-          },
-      {
-          headers:{
-              Authorization: `Bearer ${token}`,
-             'Content-Type': 'application/json'
-
           }
-      }
       );
-      console.log(response.data);
       setSections(response.data);
     }catch(e){
-        console.log("Error");
-        toast.error("Error");
+        toast.error(e?.response?.data?.message || "Couldn't generate a travel plan. Please try again.");
     } finally {
       setIsLoadingTravelPlan(false);
     }
@@ -534,20 +524,13 @@ export default function Dashboard() {
 
   const updateProfileHandler = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      const response = await axios.put(
-        `${API_URL}/api/auth/profile`,
+      const response = await apiClient.put(
+        `/api/auth/profile`,
         {
           name: editForm.name,
           phone: editForm.phone,
           location: editForm.location,
           profilePicture: editForm.profilePicture
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
         }
       );
 

@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Sun, Eye, EyeOff, Mail, Lock, User } from "lucide-react";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { API_URL } from "../config/api";
+import apiClient from "../lib/apiClient";
 
 const AuthPage = ({ onLogin, onCancel }) => {
   const [isSignIn, setIsSignIn] = useState(true);
@@ -27,17 +26,11 @@ const AuthPage = ({ onLogin, onCancel }) => {
 
     if (isSignIn) {
       try {
-        const response = await axios.post(
-          `${API_URL}/api/auth/login`,
+        const response = await apiClient.post(
+          `/api/auth/login`,
           {
             email: formData.email.trim().toLowerCase(),
             password: formData.password,
-          },
-          {
-            timeout: 30000,
-            headers: {
-              "Content-Type": "application/json",
-            },
           },
         );
 
@@ -58,7 +51,7 @@ const AuthPage = ({ onLogin, onCancel }) => {
         console.error(error);
 
         if (!error.response) {
-          toast.error("Unable to connect to server");
+          // Already surfaced by apiClient's response interceptor.
           return;
         }
 
@@ -69,6 +62,10 @@ const AuthPage = ({ onLogin, onCancel }) => {
 
           case 401:
             toast.error("Unauthorized");
+            break;
+
+          case 429:
+            // Already surfaced by apiClient's response interceptor.
             break;
 
           case 500:
@@ -89,7 +86,7 @@ const AuthPage = ({ onLogin, onCancel }) => {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, {
+      const response = await apiClient.post(`/api/auth/register`, {
         name: formData.name,
         email: formData.email,
         password: formData.password,

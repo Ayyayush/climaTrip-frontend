@@ -1,8 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-
-const API_URL = import.meta.env.VITE_API_BASE_URL;
+import { API_URL } from "../../config/api";
 
 const TripGenie = ({ user, onShowAuth }) => {
 
@@ -64,10 +63,15 @@ Where would you like to travel?`
 
             setLoading(true);
 
+            const token = localStorage.getItem("token");
+
             const res = await axios.post(
                 `${API_URL}/api/chat`,
                 {
                     message: currentInput
+                },
+                {
+                    headers: token ? { Authorization: token } : {}
                 }
             );
 
